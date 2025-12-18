@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Smart City Bin Dashboard</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        min-height: 100vh;
+        background: #1a1a1a;
+        color: #f5f5f5;
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        padding: 16px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(18px);
+        background: rgba(26, 26, 26, 0.95);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      header .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      header .logo-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #ffff9f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      header .logo-icon img {
+        width: 26px;
+        height: 26px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.5));
+      }
+      header h1 {
+        font-size: 22px;
+        letter-spacing: 0.03em;
+      }
+      header .subtitle {
+        font-size: 12px;
+        opacity: 0.7;
+      }
+
+      .tagline {
+        font-size: 13px;
+        opacity: 0.8;
+        margin-top: 2px;
+      }
+
+      .container {
+        flex: 1;
+        padding: 20px 32px 32px 32px;
+        display: grid;
+        grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.4fr);
+        gap: 24px;
+      }
+
+      .panel {
+        position: relative;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02),
+          0 18px 45px rgba(0, 0, 0, 0.8);
+        padding: 18px 18px 16px 18px;
+        overflow: hidden;
+      }
+
+      .panel::before {
+        content: "";
+        position: absolute;
+        inset: -40%;
+        background: rgba(255, 255, 159, 0.1);
+        opacity: 0.6;
+        mix-blend-mode: screen;
+        pointer-events: none;
+      }
+      .panel-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .panel-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .panel-title-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #ffff9f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: #05101f;
+        box-shadow: 0 0 12px rgba(255, 255, 159, 0.7);
+      }
+      .panel h2 {
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .panel-badge {
+        font-size: 11px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        opacity: 0.8;
+      }
+
+      /* City map background on left panel */
+      .map-bg {
+        position: absolute;
+        inset: 0;
+        opacity: 0.22;
+        background-image: url("https://images.pexels.com/photos/2407310/pexels-photo-2407310.jpeg?auto=compress&cs=tinysrgb&w=1200");
+        background-size: cover;
+        background-position: center;
+        mix-blend-mode: soft-light;
+        pointer-events: none;
+      }
+
+      /* Stats strip */
+      .stats-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 12px;
+      }
+      .stat-pill {
+        flex: 1;
+        padding: 6px 9px;
+        border-radius: 999px;
+        background: rgba(255, 255, 159, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .stat-pill span:first-child {
+        opacity: 0.75;
+      }
+      .stat-pill span:last-child {
+        font-weight: 600;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 6px;
+        font-size: 12px;
+      }
+      th,
+      td {
+        padding: 7px 8px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      th {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.7;
+      }
+      tbody tr {
+        transition: background 0.18s ease, transform 0.18s ease,
+          box-shadow 0.18s ease;
+      }
+      tbody tr:hover {
+        background: rgba(5, 16, 31, 0.6);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.7);
+      }
+
+      .bin-cell {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bin-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #ffff9f;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .bin-avatar img {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+      }
+      .bin-label-main {
+        font-size: 13px;
+      }
+      .bin-label-sub {
+        font-size: 11px;
+        opacity: 0.65;
+      }
+
+      .badge-ok {
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: rgba(255, 255, 159, 0.16);
+        border: 1px solid rgba(255, 255, 159, 0.7);
+        color: #ffff9f;
+        font-size: 11px;
+      }
+      .badge-alert {
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: rgba(231, 76, 60, 0.16);
+        border: 1px solid rgba(231, 76, 60, 0.7);
+        color: #ffb6b1;
+        font-size: 11px;
+      }
+
+      .fill-bar-wrap {
+        width: 100%;
+        height: 7px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+      .fill-bar {
+        height: 100%;
+        border-radius: 999px;
+        background: #ffff9f;
+        transition: width 0.5s ease;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 11px;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.1);
+        color: #f5f5f5;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: background 0.18s ease, transform 0.18s ease,
+          box-shadow 0.18s ease;
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.18);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.7);
+      }
+      .btn-primary {
+        background: #ffff9f;
+        color: #05101f;
+        border: none;
+        box-shadow: 0 0 15px rgba(255, 255, 159, 0.65);
+      }
+      .btn-primary:hover {
+        box-shadow: 0 0 20px rgba(255, 255, 159, 0.9);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+      }
+
+      .route {
+        margin-top: 10px;
+        font-size: 12px;
+        opacity: 0.9;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .route-icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 5px;
+        background: rgba(255, 255, 159, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+
+      /* Right panel layout */
+      .right-grid {
+        display: grid;
+        grid-template-rows: auto auto;
+        gap: 16px;
+      }
+
+      .form-row {
+        margin-bottom: 8px;
+      }
+      label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        opacity: 0.7;
+        margin-bottom: 3px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 7px 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(5, 16, 31, 0.7);
+        color: #f5f5f5;
+        outline: none;
+        font-size: 12px;
+      }
+      input:focus,
+      select:focus {
+        border-color: #ffff9f;
+        box-shadow: 0 0 0 1px rgba(255, 255, 159, 0.5);
+      }
+
+      .city-mini-map {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px;
+        height: 150px;
+        background: url("https://amcharts.com/wp-content/uploads/2013/12/demo_640x360.png")
+          center/cover no-repeat;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+      }
+      .city-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        mix-blend-mode: soft-light;
+      }
+      .city-labels {
+        position: absolute;
+        inset: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-size: 11px;
+        color: #e5faff;
+      }
+      .city-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #ffff9f;
+        box-shadow: 0 0 10px rgba(255, 255, 159, 0.9);
+        margin-right: 4px;
+      }
+
+      @media (max-width: 960px) {
+        .container {
+          grid-template-columns: 1fr;
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo">
+        <div class="logo-icon">
+          <!-- replace src with your own dustbin icon PNG/SVG -->
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/1040/1040230.png"
+            alt="Bin"
+          />
+        </div>
+        <div>
+          <h1>Smart City Bin Monitor</h1>
+          <div class="tagline">
+            Real‑time status of smart waste bins across your campus
+          </div>
+        </div>
+      </div>
+      <div class="subtitle">
+        Smart route · Fill‑level simulation · Sorting insights
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- LEFT PANEL / BINS LIST -->
+      <section class="panel">
+        <div class="map-bg"></div>
+        <div class="panel-content">
+          <div class="panel-header">
+            <div class="panel-title">
+              <div class="panel-title-icon">🗺</div>
+              <div>
+                <h2>All Smart Bins</h2>
+                <div style="font-size: 11px; opacity: 0.7">
+                  Live view of bin health & collection status
+                </div>
+              </div>
+            </div>
+            <div class="panel-badge">Dashboard</div>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-pill">
+              <span>Bins online</span>
+              <span id="stat-total">0</span>
+            </div>
+            <div class="stat-pill">
+              <span>Needs collection</span>
+              <span id="stat-alerts">0</span>
+            </div>
+            <div class="stat-pill">
+              <span>Avg. fill</span>
+              <span id="stat-avg">0%</span>
+            </div>
+          </div>
+
+          <table id="bins-table">
+            <thead>
+              <tr>
+                <th>Bin</th>
+                <th>Type</th>
+                <th>Fill</th>
+                <th>Status</th>
+                <th style="text-align: right">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <div
+            style="
+              margin-top: 10px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <button id="generate-route" class="btn btn-primary">
+              Generate Optimised Route
+            </button>
+            <div class="route" id="route-output">
+              <div class="route-icon">↺</div>
+              <span>Route not generated yet.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL / FORM + MINI MAP -->
+      <section class="panel">
+        <div class="panel-content right-grid">
+          <div>
+            <div class="panel-header">
+              <div class="panel-title">
+                <div class="panel-title-icon">🗑</div>
+                <div>
+                  <h2>Add / Simulate Bin</h2>
+                  <div style="font-size: 11px; opacity: 0.7">
+                    Create bins and test filling & sorting
+                  </div>
+                </div>
+              </div>
+              <div class="panel-badge">Controls</div>
+            </div>
+
+            <div class="form-row">
+              <label>Location / Landmark</label>
+              <input
+                type="text"
+                id="location"
+                placeholder="e.g. Main Gate, CSE Block, Hostel 3"
+              />
+            </div>
+            <div class="form-row">
+              <label>Waste Type</label>
+              <select id="type">
+                <option value="plastic">Plastic</option>
+                <option value="food">Food</option>
+                <option value="metal">Metal</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Initial Fill Level (%)</label>
+              <input type="number" id="fill" value="0" min="0" max="100" />
+            </div>
+            <button
+              id="add-bin"
+              class="btn btn-primary"
+              style="margin-top: 6px"
+            >
+              Add Smart Bin
+            </button>
+          </div>
+
+          <div>
+            <div
+              style="
+                font-size: 13px;
+                margin-bottom: 6px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              "
+            >
+              <span>Campus mini‑map</span>
+              <button class="btn btn-ghost" type="button" onclick="fetchBins()">
+                Refresh
+              </button>
+            </div>
+            <div class="city-mini-map">
+              <!-- free SVG/world maps available, e.g. amCharts / VectorPortal -->
+              <div class="city-overlay"></div>
+              <div class="city-labels">
+                <div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      margin-bottom: 4px;
+                    "
+                  >
+                    <span class="city-dot"></span
+                    ><span>High priority cluster</span>
+                  </div>
+                  <div style="font-size: 10px; opacity: 0.75">
+                    Green dots indicate bins over 80% fill.
+                  </div>
+                </div>
+                <div style="text-align: right">
+                  <div style="font-size: 11px; opacity: 0.8">
+                    Smart Route Ready
+                  </div>
+                  <div style="font-size: 10px; opacity: 0.6">
+                    Use the left panel to simulate.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const API = "http://localhost:8080";
+
+      async function fetchBins() {
+        const res = await fetch(API + "/bins");
+        const bins = await res.json();
+
+        renderBins(bins);
+        updateStats(bins);
+      }
+
+      function updateStats(bins) {
+        const total = bins.length;
+        const alerts = bins.filter((b) => b.needsCollection).length;
+        const avg = total
+          ? Math.round(bins.reduce((s, b) => s + b.fillLevel, 0) / total)
+          : 0;
+
+        document.getElementById("stat-total").textContent = total;
+        document.getElementById("stat-alerts").textContent = alerts;
+        document.getElementById("stat-avg").textContent = avg + "%";
+      }
+
+      function renderBins(bins) {
+        const tbody = document.querySelector("#bins-table tbody");
+        tbody.innerHTML = "";
+
+        bins.forEach((b) => {
+          const tr = document.createElement("tr");
+
+          const avatarUrl =
+            "https://cdn-icons-png.flaticon.com/512/1040/1040230.png"; // dustbin icon
+
+          const statusBadge = b.needsCollection
+            ? `<span class="badge-alert">Needs Collection</span>`
+            : `<span class="badge-ok">OK</span>`;
+
+          const fillColor = b.fillLevel >= 80 ? "#ff6b6b" : "#ffff9f";
+
+          tr.innerHTML = `
+      <td>
+        <div class="bin-cell">
+          <div class="bin-avatar">
+            <img src="${avatarUrl}" alt="Bin">
+          </div>
+          <div>
+            <div class="bin-label-main">Bin #${b.id}</div>
+            <div class="bin-label-sub">${b.location}</div>
+          </div>
+        </div>
+      </td>
+      <td>${b.type}</td>
+      <td>
+        <div style="font-size:11px; margin-bottom:2px;">${b.fillLevel}%</div>
+        <div class="fill-bar-wrap">
+          <div class="fill-bar" style="width:${b.fillLevel}%; background:${fillColor};"></div>
+        </div>
+      </td>
+      <td>${statusBadge}</td>
+      <td style="text-align:right;">
+        <button class="btn" onclick="increaseFill(${b.id})">+ Fill</button>
+        <button class="btn" onclick="sortWaste(${b.id})">Sort</button>
+      </td>
+    `;
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      async function addBin() {
+        const loc = document.getElementById("location").value.trim();
+        const type = document.getElementById("type").value;
+        const fill = document.getElementById("fill").value;
+
+        if (!loc) {
+          alert("Please enter a location / landmark for the bin.");
+          return;
+        }
+
+        const body = `location=${encodeURIComponent(
+          loc
+        )}&type=${encodeURIComponent(type)}&fill=${encodeURIComponent(fill)}`;
+
+        await fetch(API + "/bins", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body,
+        });
+
+        document.getElementById("location").value = "";
+        document.getElementById("fill").value = 0;
+        fetchBins();
+      }
+
+      async function increaseFill(id) {
+        await fetch(`${API}/bins/${id}/fill`, { method: "POST" });
+        fetchBins();
+      }
+
+      async function sortWaste(id) {
+        const res = await fetch(`${API}/bins/${id}/sort`, { method: "POST" });
+        const bin = await res.json();
+        alert(
+          `Bin ${bin.id} sorted.\n` +
+            `Recyclable: ${bin.recyclable.toFixed(1)}%\n` +
+            `Non‑recyclable: ${bin.nonRecyclable.toFixed(1)}%`
+        );
+        fetchBins();
+      }
+
+      async function generateRoute() {
+        const res = await fetch(API + "/route");
+        const data = await res.json();
+        const el = document.getElementById("route-output");
+
+        if (!data.route || data.route.length === 0) {
+          el.innerHTML =
+            '<div class="route-icon">ℹ</div><span>No bins currently need collection.</span>';
+          return;
+        }
+
+        el.innerHTML =
+          '<div class="route-icon">🚚</div><span>Recommended Route: ' +
+          data.route.join(" → ") +
+          "</span>";
+      }
+
+      document.getElementById("add-bin").addEventListener("click", addBin);
+      document
+        .getElementById("generate-route")
+        .addEventListener("click", generateRoute);
+
+      fetchBins();
+    </script>
+  </body>
+</html>
